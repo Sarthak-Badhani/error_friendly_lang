@@ -1,0 +1,11 @@
+// Lexical Error Examples
+// This file demonstrates various lexical errors
+
+// Error 1: Unterminated string
+string message = "Hello World;
+
+// Error 2: Invalid character
+float price = 10.50@;
+
+// Error 3: Invalid operator
+int a & b;

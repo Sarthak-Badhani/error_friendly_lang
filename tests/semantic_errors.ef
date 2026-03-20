@@ -1,0 +1,13 @@
+// Semantic Error Examples
+// This file demonstrates semantic/type errors
+
+// Error 1: Undeclared variable
+int result;
+result = undeclared_var + 10;
+
+// Error 2: Redeclared variable
+int count;
+int count;
+
+// Error 3: Type mismatch (in future versions)
+float ratio = "three point fourteen";

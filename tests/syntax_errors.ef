@@ -1,0 +1,15 @@
+// Syntax Error Examples
+// This file demonstrates various syntax errors
+
+// Error 1: Missing semicolon
+int x = 10
+
+// Error 2: Missing closing parenthesis
+int y = (5 + 3;
+
+// Error 3: Missing type in declaration
+a = 42;
+
+// Error 4: Missing closing brace
+if (x > 5) {
+    y = x + 1
