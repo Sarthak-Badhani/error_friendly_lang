@@ -1,0 +1,205 @@
+/* ==========================================================
+   App.css — Main Application Layout & Top Bar Styles
+   ========================================================== */
+
+/* ── App Shell ── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+/* ==========================================================
+   Top Bar — 3-section layout: Title | Run | About
+   ========================================================== */
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: var(--topbar-height);
+  padding: 0 20px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+/* ── Left: Title ── */
+.topbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.topbar-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
+}
+
+/* ── Center: Run Button ── */
+.topbar-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.run-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 28px;
+  background: linear-gradient(135deg, var(--accent-primary), #7c3aed);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: white;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 0 2px 12px var(--accent-glow);
+  letter-spacing: 0.01em;
+}
+
+.run-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--accent-primary-hover), #8b5cf6);
+  box-shadow: 0 4px 20px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+.run-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 6px var(--accent-glow);
+}
+
+.run-btn:disabled {
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+.run-btn.loading {
+  background: linear-gradient(135deg, #4f46e5, #6d28d9);
+}
+
+.play-icon {
+  flex-shrink: 0;
+}
+
+/* Button spinner */
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Right: About Button ── */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.about-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.about-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+  background: rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.1);
+}
+
+.about-btn:active {
+  transform: scale(0.97);
+}
+
+/* ==========================================================
+   Workspace — Split-screen Layout
+   ========================================================== */
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.panel {
+  height: 100%;
+  overflow: hidden;
+}
+
+.editor-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+.output-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ==========================================================
+   Responsive — Stack vertically on small screens
+   ========================================================== */
+@media (max-width: 768px) {
+  .topbar {
+    grid-template-columns: auto 1fr auto;
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .topbar-title {
+    font-size: 13px;
+  }
+
+  .run-btn {
+    padding: 6px 16px;
+    font-size: 12px;
+  }
+
+  .about-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .workspace {
+    flex-direction: column;
+  }
+
+  .editor-panel,
+  .output-panel {
+    flex: 1;
+  }
+
+  .editor-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+}
