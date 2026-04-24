@@ -21,53 +21,55 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
 
+  // Backend API endpoint
+  const API_URL = 'http://localhost:5000/compile';
+
   /**
-   * handleRun — Compiles the user's code.
+   * handleRun — Sends code to the backend compiler and displays the result.
    *
-   * Currently uses mock output to simulate compilation.
-   * When the backend is ready, replace the setTimeout block
-   * with an API call like:
-   *
-   *   const response = await fetch('/api/compile', {
-   *     method: 'POST',
-   *     headers: { 'Content-Type': 'application/json' },
-   *     body: JSON.stringify({ code }),
-   *   });
-   *   const data = await response.json();
-   *   setOutput(data.output);
+   * Makes a POST request to the Express backend which:
+   *  1. Saves the code as a .ef temp file
+   *  2. Runs compiler.exe on it
+   *  3. Returns stdout/stderr
    */
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback(async () => {
     // Prevent double-clicks while compiling
     if (isLoading) return;
 
     setIsLoading(true);
     setOutput('');
 
-    // Simulate compilation delay (1.2s)
-    setTimeout(() => {
-      // Mock output — replace with real backend response later
-      const mockOutput = [
-        '═══════════════════════════════════════════',
-        '  Error-Friendly Language Compiler v1.0',
-        '═══════════════════════════════════════════',
-        '',
-        '  ▸ Lexical Analysis    ............  ✅ Passed',
-        '  ▸ Syntax Analysis     ............  ✅ Passed',
-        '  ▸ Semantic Analysis   ............  ✅ Passed',
-        '',
-        '───────────────────────────────────────────',
-        '  COMPILATION SUCCESSFUL — No errors found ✅',
-        '───────────────────────────────────────────',
-        '',
-        `  Lines processed: ${code.split('\n').length}`,
-        `  Characters: ${code.length}`,
-        `  Timestamp: ${new Date().toLocaleTimeString()}`,
-        '',
-      ].join('\n');
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
 
-      setOutput(mockOutput);
+      const data = await response.json();
+
+      if (data.output) {
+        // Show the full compiler output (works for both success and errors)
+        setOutput(data.output);
+      } else if (data.error) {
+        // Fallback: show error message if no output
+        setOutput(data.error);
+      } else {
+        setOutput('No output received from compiler.');
+      }
+    } catch (error) {
+      // Network error or backend is down
+      setOutput(
+        '❌ CONNECTION ERROR\n\n' +
+        'Could not reach the compiler backend.\n' +
+        'Make sure the backend server is running:\n\n' +
+        '  cd backend\n' +
+        '  node server.js\n\n' +
+        `Details: ${error.message}`
+      );
+    } finally {
       setIsLoading(false);
-    }, 1200);
+    }
   }, [code, isLoading]);
 
   /**
