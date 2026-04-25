@@ -1,123 +1,92 @@
-# Error-Friendly Programming Language Compiler
+# Error-Friendly Programming Language
 
 ## Overview
-A compiler for a beginner-friendly programming language designed to provide clear, helpful error messages that guide learners through their mistakes.
+The **Error-Friendly Programming Language** is a beginner-focused full-stack ecosystem consisting of a custom compiler and a web-based IDE. It is specifically designed to provide clear, helpful, and educational error messages that guide learners through their mistakes rather than overwhelming them with cryptic technical jargon.
 
-## Project Structure
+## What It Is
+Instead of typical command-line compilation errors, this project provides a modern web interface where users can write code and instantly see compilation results in a split-pane terminal. The core compiler is written in C++ and handles custom language syntax, complete with strict type checking, block-scoped variable resolution, and panic-mode error recovery. 
 
-```
-error_friendly/
-├── src/              # Implementation files
-│   ├── main.cpp      # Compiler driver and entry point
-│   ├── token.cpp     # Token definitions
-│   ├── lexer.cpp     # Lexical analyzer
-│   ├── parser.cpp    # Syntax analyzer
-│   ├── error_handler.cpp    # Error reporting system
-│   └── semantic_analyzer.cpp # Semantic analysis
-├── include/          # Header files
-│   ├── token.h
-│   ├── lexer.h
-│   ├── parser.h
-│   ├── error_handler.h
-│   ├── semantic_analyzer.h
-│   └── compiler.h
-├── tests/            # Test programs
-└── docs/             # Documentation
-```
+*(For a deep dive into the compiler's architecture, stages, and implementation details, please see the `IMPLEMENTATION_SUMMARY.md` file.)*
 
-## Compiler Architecture
+## Tech Stack
 
-The compiler follows a multi-pass compilation process:
+**Frontend**
+- **React (Vite)**: High-performance modern web framework.
+- **Monaco Editor**: Provides the core code editing experience, syntax highlighting, and line numbers.
+- **Vanilla CSS**: Used for all custom retro/dark-mode styling and layout.
 
-1. **Lexical Analysis** - Tokenizes source code and detects lexical errors
-2. **Syntax Analysis** - Parses tokens into an Abstract Syntax Tree (AST) with error recovery
-3. **Semantic Analysis** - Validates type checking, variable declarations, and scope
-4. **Error Reporting** - Generates user-friendly error messages with suggestions
+**Backend**
+- **Node.js & Express**: Lightweight REST API to handle incoming compilation requests.
+- **Child Process Orchestration**: Securely invokes the C++ compiler executable on temporary source files.
 
-## Language Features
+**Compiler Core**
+- **C++17**: High-performance systems language used to build the lexer, parser, and semantic analyzer from scratch.
+- **MinGW G++**: Build toolchain used to statically link and compile the executable.
 
-### Data Types
-- `int` - Integer values
-- `float` - Floating-point numbers
-- `bool` - Boolean values (true/false)
-- `string` - Text strings
+## Language Basics
 
-### Operators
-- Arithmetic: `+`, `-`, `*`, `/`, `%`
-- Comparison: `==`, `!=`, `<`, `<=`, `>`, `>=`
-- Logical: `&&`, `||`, `!`
-- Assignment: `=`
-
-### Control Flow
-- `if` statement
-- `else` clause
-- `while` loops (planned)
-- `for` loops (planned)
-
-### Variable Declaration
-```
-int x;
+The custom `.ef` language includes basic types, block scoping, and control flow:
+```cpp
+// Variable Declarations
+int age = 20;
 float pi = 3.14;
-bool flag = true;
-string message = "Hello";
+bool isDone = false;
+string message = "Hello World";
+
+// Control Flow
+if (age >= 18) {
+    string status = "Adult";
+}
 ```
 
-## Building the Project
+## Running the Project
 
+To run the entire ecosystem locally, you will need to start both the backend server and the frontend client.
+
+### 1. Build the C++ Compiler
+*(Ensure you have MinGW installed on your system)*
 ```bash
-# Compile the entire project
-# (Use the built-in C++ Build task in VS Code)
+# In the root directory, compile the binary:
+mingw32-make
+# OR manually compile:
+g++ -std=c++17 -Wall -Wextra -static-libgcc -static-libstdc++ -Iinclude src/*.cpp -o bin/compiler.exe
 ```
 
-## Running the Compiler
-
+### 2. Start the Backend Server
+The Node.js server acts as the bridge between the React app and the C++ binary.
 ```bash
-# Compile a source file
-compiler program.ef
-
-# Interactive mode with sample code (no arguments)
-compiler
+cd backend
+npm install
+node server.js
+# The backend will run on http://localhost:5000
 ```
 
-## Error Messages
-
-The compiler provides clear, educational error messages that include:
-- Error type and location (line and column)
-- Clear explanation of what went wrong
-- Suggestions for fixing the error
-- Context showing the problematic code
-
-Example:
-```
-[Line 3, Column 5] UNDECLARED VARIABLE ERROR: Variable 'x' is not declared.
-    Context: x = 42;
-    Suggestion: Declare the variable before using it: int x;
+### 3. Start the Frontend App
+The Vite React app serves the web interface.
+```bash
+cd frontend
+npm install
+npm run dev
+# The frontend will run on http://localhost:5173
 ```
 
-## Test Cases
+Open `http://localhost:5173` in your browser to start writing code!
 
-Sample test programs are provided in the `tests/` directory:
-- `valid_program.ef` - Valid program without errors
-- `lexical_errors.ef` - Demonstrates lexical error detection
-- `syntax_errors.ef` - Demonstrates syntax error detection
-- `semantic_errors.ef` - Demonstrates semantic error detection
+## Educational Error Messages
 
-## Future Enhancements
+The primary feature of this language is its error reporting. When a user makes a mistake, the compiler attempts to diagnose *why* it happened and offers a human-readable suggestion.
 
-- [ ] Function definitions and calls
-- [ ] Array support
-- [ ] Additional built-in functions
-- [ ] Code generation to intermediate representation
-- [ ] Optimization passes
-- [ ] REPL (Read-Eval-Print Loop) mode
+Example of a caught Type Error:
+```
+[Line 1, Column 5] TYPE ERROR: Cannot assign 'string' value to variable 'x' of type 'int'.
+    Suggestion: Make sure the value matches the declared type. Expected 'int' but got 'string'.
+```
 
-## References
-
-This compiler implementation is based on standard compiler design principles including:
-- Lexical analysis using finite automata
-- Recursive descent parsing
-- AST-based semantic analysis
-- Error recovery techniques (panic-mode recovery)
+Example of a caught Syntax Error:
+```
+[Line 3, Column 1] SYNTAX ERROR: Expected ';' after variable declaration.
+    Suggestion: Add a ';' at the end: int x = ...;
+```
 
 ---
-**Created as part of the Error-Friendly Programming Language Project**
+*Created as part of the Error-Friendly Programming Language Project*
