@@ -14,6 +14,7 @@ private:
     size_t start;
     int line;
     int column;
+    int startColumn;  // Column at the start of current token
     std::shared_ptr<ErrorHandler> errorHandler;
     
     static std::unordered_map<std::string, TokenType> keywords;

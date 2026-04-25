@@ -1,0 +1,6 @@
+// Test: If condition must be bool (Issue #4)
+int x = 5;
+
+if (x) {
+    x = 10;
+}

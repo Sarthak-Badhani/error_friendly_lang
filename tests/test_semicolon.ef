@@ -1,0 +1,3 @@
+// Test: Missing semicolon recovery (Issue #5)
+int x = 5
+int y = 10;

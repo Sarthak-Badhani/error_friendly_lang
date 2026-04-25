@@ -84,6 +84,13 @@ struct IfStatement : public Statement {
         : Statement(line, col), condition(cond), thenBranch(then), elseBranch(elseS) {}
 };
 
+// FIX #7/#8: Block statement for scoped { } blocks
+struct BlockStatement : public Statement {
+    std::vector<StatementPtr> statements;
+    BlockStatement(std::vector<StatementPtr> stmts, int line, int col)
+        : Statement(line, col), statements(std::move(stmts)) {}
+};
+
 struct Program : public ASTNode {
     std::vector<StatementPtr> statements;
 };
@@ -106,6 +113,7 @@ private:
     
     // Parsing methods
     StatementPtr statement();
+    StatementPtr blockStatement();  // Scoped { } blocks
     StatementPtr declaration();
     StatementPtr varDeclaration();
     ExpressionPtr expression();

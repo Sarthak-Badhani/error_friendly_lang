@@ -1,11 +1,5 @@
-// Test program with intentional errors
-
-// Error 1: Undeclared variable
-result = x + 5;
-
-// Error 2: Missing semicolon 
-int y = 10
-
-// Error 3: Redeclared variable
-int count;
-int count = 0;
+// Test: Type checking (Issue #3)
+int x = "hello";
+bool done = 5;
+float pi = "text";
+string name = 42;

@@ -28,7 +28,7 @@ bool Compiler::compile(const std::string& source) {
     
     if (errorHandler->hasAnyErrors()) {
         std::cout << "Lexical analysis failed." << std::endl;
-        errorHandler->reportAllErrors();
+        // FIX #1: Do NOT call reportAllErrors() here — let displayResults() do it once.
         return false;
     }
     std::cout << "✓ Lexical analysis completed successfully." << std::endl;
@@ -41,7 +41,7 @@ bool Compiler::compile(const std::string& source) {
     
     if (errorHandler->hasAnyErrors()) {
         std::cout << "Syntax analysis failed." << std::endl;
-        errorHandler->reportAllErrors();
+        // FIX #1: Do NOT call reportAllErrors() here.
         return false;
     }
     std::cout << "✓ Syntax analysis completed successfully." << std::endl;
@@ -54,7 +54,7 @@ bool Compiler::compile(const std::string& source) {
     
     if (errorHandler->hasAnyErrors()) {
         std::cout << "Semantic analysis failed." << std::endl;
-        errorHandler->reportAllErrors();
+        // FIX #1: Do NOT call reportAllErrors() here.
         return false;
     }
     std::cout << "✓ Semantic analysis completed successfully." << std::endl << std::endl;
@@ -72,6 +72,8 @@ bool Compiler::compileFromFile(const std::string& filename) {
 
 void Compiler::displayResults() {
     if (hasErrors()) {
+        // FIX #1/#2: This is now the ONLY place errors are printed,
+        // so each error appears exactly once and the count matches.
         errorHandler->reportAllErrors();
     } else {
         std::cout << "=== COMPILATION SUCCESSFUL ===" << std::endl;

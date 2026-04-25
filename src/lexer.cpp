@@ -18,7 +18,8 @@ std::unordered_map<std::string, TokenType> Lexer::keywords = {
 };
 
 Lexer::Lexer(const std::string& src, std::shared_ptr<ErrorHandler> handler)
-    : source(src), current(0), start(0), line(1), column(1), errorHandler(handler) {}
+    : source(src), current(0), start(0), line(1), column(1),
+      startColumn(1), errorHandler(handler) {}
 
 char Lexer::peek() const {
     if (isAtEnd()) return '\0';
@@ -64,20 +65,23 @@ bool Lexer::match(char expected) {
     return true;
 }
 
+// FIX #6: Use startColumn (captured before scanning the token) instead of
+// computing column backwards from the current position, which could go negative.
 Token Lexer::makeToken(TokenType type) {
     std::string lexeme = source.substr(start, current - start);
-    return Token(type, lexeme, line, column - static_cast<int>(lexeme.size()));
+    return Token(type, lexeme, line, startColumn);
 }
 
 Token Lexer::makeToken(TokenType type, const std::string& value) {
     std::string lexeme = source.substr(start, current - start);
-    return Token(type, lexeme, line, column - static_cast<int>(lexeme.size()), value);
+    return Token(type, lexeme, line, startColumn, value);
 }
 
 Token Lexer::errorToken(const std::string& message) {
-    int startCol = column - static_cast<int>(source.substr(start, current - start).size());
-    Token token(TokenType::ERROR_TOKEN, "", line, startCol);
-    errorHandler->addError(ErrorType::LEXICAL_ERROR, message, line, startCol);
+    // FIX #6: Clamp column to at least 1 — never negative
+    int col = (startColumn >= 1) ? startColumn : 1;
+    Token token(TokenType::ERROR_TOKEN, "", line, col);
+    errorHandler->addError(ErrorType::LEXICAL_ERROR, message, line, col);
     return token;
 }
 
@@ -166,12 +170,18 @@ Token Lexer::skipWhitespace() {
 
 Token Lexer::nextToken() {
     while (!isAtEnd()) {
+        // FIX #6: Capture start position AND column BEFORE scanning
         start = current;
+        startColumn = column;
+
         char c = advance();
         
         // Whitespace
         if (c == ' ' || c == '\r' || c == '\t') continue;
-        if (c == '\n') return makeToken(TokenType::NEWLINE);
+        if (c == '\n') {
+            // Note: startColumn was already captured above before advance()
+            return makeToken(TokenType::NEWLINE);
+        }
         
         // Comments
         if (c == '/' && peek() == '/') {
@@ -192,12 +202,14 @@ Token Lexer::nextToken() {
         // Numbers
         if (isDigit(c)) {
             current--;
+            column--;  // Back up column too since we un-consumed the char
             return scanNumber();
         }
         
         // Identifiers and keywords
         if (isAlpha(c)) {
             current--;
+            column--;  // Back up column too
             return scanIdentifier();
         }
         

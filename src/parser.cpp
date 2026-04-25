@@ -45,11 +45,16 @@ Token Parser::consume(TokenType type, const std::string& message) {
     return current;
 }
 
+// FIX #5: Improved synchronize — also stops at SEMICOLON and RBRACE
 void Parser::synchronize() {
     advance();
     
     while (!isAtEnd()) {
+        // Stop after a semicolon — the next token starts a fresh statement
+        if (previous().type == TokenType::SEMICOLON) return;
+
         switch (peek().type) {
+            // Stop before any statement/declaration keyword
             case TokenType::KW_IF:
             case TokenType::KW_FOR:
             case TokenType::KW_WHILE:
@@ -58,6 +63,7 @@ void Parser::synchronize() {
             case TokenType::KW_BOOL:
             case TokenType::KW_STRING:
             case TokenType::KW_RETURN:
+            case TokenType::RBRACE:  // Don't eat past block boundaries
                 return;
             default:
                 advance();
@@ -65,25 +71,32 @@ void Parser::synchronize() {
     }
 }
 
+// FIX #7: Separate blockStatement() method that produces a BlockStatement AST node
+// and calls declaration() inside the block so type keywords are recognized.
+StatementPtr Parser::blockStatement() {
+    Token brace = previous();  // The '{' was already consumed
+    std::vector<StatementPtr> stmts;
+
+    // Parse declarations and statements until we hit '}' or EOF
+    while (!check(TokenType::RBRACE) && !isAtEnd()) {
+        StatementPtr s = declaration();
+        if (s) {
+            stmts.push_back(s);
+        }
+    }
+
+    consume(TokenType::RBRACE, "Expected '}' to close block. Make sure all opening braces '{' have a closing '}'.");
+    return std::make_shared<BlockStatement>(std::move(stmts), brace.line, brace.column);
+}
+
 StatementPtr Parser::statement() {
-    if (check(TokenType::LBRACE)) {
-        // Block statement - simplified
-        advance();
-        while (!check(TokenType::RBRACE) && !isAtEnd()) {
-            statement();
-        }
-        if (!check(TokenType::RBRACE)) {
-            errorHandler->addError(ErrorType::SYNTAX_ERROR,
-                                 "Expected '}' to close block", 
-                                 peek().line, peek().column,
-                                 "Make sure all opening braces '{' have a closing '}'");
-        }
-        consume(TokenType::RBRACE, "Expected '}' after block");
-        return nullptr;
+    // FIX #7: Block statement — delegate to blockStatement()
+    if (match(std::vector<TokenType>{TokenType::LBRACE})) {
+        return blockStatement();
     }
     
     if (match(std::vector<TokenType>{TokenType::KW_IF})) {
-        // If statement - simplified implementation
+        // If statement
         consume(TokenType::LPAREN, "Expected '(' after 'if'");
         ExpressionPtr condition = expression();
         consume(TokenType::RPAREN, "Expected ')' after condition");
@@ -98,7 +111,19 @@ StatementPtr Parser::statement() {
     
     // Expression statement
     ExpressionPtr expr = expression();
-    consume(TokenType::SEMICOLON, "Expected ';' after expression. Did you forget the semicolon?");
+
+    // FIX #5: Better missing-semicolon recovery
+    if (!check(TokenType::SEMICOLON)) {
+        Token cur = peek();
+        errorHandler->addError(ErrorType::SYNTAX_ERROR,
+            "Expected ';' after expression. Did you forget the semicolon?",
+            cur.line, cur.column,
+            "Add a ';' at the end of the statement.");
+        // Don't consume — let synchronize handle recovery
+    } else {
+        advance();  // consume the semicolon
+    }
+
     return std::make_shared<ExpressionStatement>(expr, peek().line, peek().column);
 }
 
@@ -115,14 +140,36 @@ StatementPtr Parser::varDeclaration() {
     Token typeToken = advance();
     std::string type = typeToken.lexeme;
     
-    Token name = consume(TokenType::IDENTIFIER, "Expected variable name after type");
+    // FIX #1 (partial): If the next token is NOT an identifier (e.g., "int if = 5;"),
+    // report error once and recover cleanly.
+    if (!check(TokenType::IDENTIFIER)) {
+        Token bad = peek();
+        errorHandler->addError(ErrorType::SYNTAX_ERROR,
+            "Expected variable name after '" + type + "', but found '" + bad.lexeme + "'.",
+            bad.line, bad.column,
+            "Variable names cannot be reserved keywords. Use a different name.");
+        synchronize();
+        return nullptr;
+    }
+
+    Token name = advance();
     
     ExpressionPtr initializer = nullptr;
     if (match(std::vector<TokenType>{TokenType::OP_ASSIGN})) {
         initializer = expression();
     }
     
-    consume(TokenType::SEMICOLON, "Expected ';' after variable declaration");
+    // FIX #5: Better missing-semicolon recovery for declarations
+    if (!check(TokenType::SEMICOLON)) {
+        Token cur = peek();
+        errorHandler->addError(ErrorType::SYNTAX_ERROR,
+            "Expected ';' after variable declaration.",
+            cur.line, cur.column,
+            "Add a ';' at the end: " + type + " " + name.lexeme + " = ...;");
+    } else {
+        advance();  // consume the semicolon
+    }
+
     return std::make_shared<VarDeclaration>(name.lexeme, type, initializer,
                                            name.line, name.column);
 }
@@ -264,13 +311,29 @@ std::shared_ptr<Program> Parser::parse() {
     auto program = std::make_shared<Program>();
     
     while (!isAtEnd()) {
-        StatementPtr stmt = declaration();
-        if (stmt) {
-            program->statements.push_back(stmt);
+        try {
+            StatementPtr stmt = declaration();
+            if (stmt) {
+                program->statements.push_back(stmt);
+            }
+        } catch (...) {
+            // Safety net — shouldn't happen but prevents crash
+            synchronize();
         }
         
-        if (errorHandler->hasAnyErrors() && current > 0) {
-            synchronize();
+        // FIX #1: Only synchronize if an error was added AND we haven't
+        // already moved past the problem token. Check if we're stuck.
+        if (errorHandler->hasAnyErrors() && !isAtEnd()) {
+            // If the current token is something we can start a fresh statement with, don't sync
+            TokenType t = peek().type;
+            if (t != TokenType::KW_INT && t != TokenType::KW_FLOAT &&
+                t != TokenType::KW_BOOL && t != TokenType::KW_STRING &&
+                t != TokenType::KW_IF && t != TokenType::KW_WHILE &&
+                t != TokenType::KW_FOR && t != TokenType::KW_RETURN &&
+                t != TokenType::IDENTIFIER && t != TokenType::RBRACE &&
+                t != TokenType::LBRACE) {
+                synchronize();
+            }
         }
     }
     
